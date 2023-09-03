@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User{
+  id Int @id @default(autoincrement())
+  telegram_id Int @db.Integer()
+  username String @db.VarChar(128)
+  first_name String @db.VarChar(128)
+  notifications Notification []
+  members_event MembersEvent[]
+}
+
+model Event{
+  id Int @id @default(autoincrement())
+  title String @db.VarChar(128)
+  created_at DateTime @default(now())
+  deadline_datetime DateTime @db.Timestamp()
+  members_event MembersEvent[]
+}
+
+model MembersEvent{
+  id Int @id @default(autoincrement())
+  event_id Int @db.Integer()
+  events Event @relation(fields:[event_id], references: [id])
+  member_id Int @db.Integer()
+  members User @relation(fields: [member_id], references: [id])
+}
+
+model Notification{
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  recipient_id Int @db.Integer()
+  recipients User @relation(fields: [recipient_id], references: [id])
+  recipent_datetime DateTime @db.Timestamp()
+}
