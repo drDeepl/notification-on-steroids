@@ -1,23 +1,29 @@
-import { Start, Update, Ctx, On, Message } from 'nestjs-telegraf';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Scenes, Telegraf } from 'telegraf';
-
-type Context = Scenes.SceneContext;
-
-@Update()
-export class TelegramService extends Telegraf<Context> {
-  constructor(token: any, private prisma: PrismaService) {
-    super(token);
+import { UserT } from './types/user.type';
+@Injectable()
+export class TelegramService {
+  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(TelegramService.name);
+  async getUser(userId: number): Promise<UserT[]> {
+    this.logger.debug('getUser');
+    return this.prisma.user.findMany({
+      where: { telegram_id: userId },
+    });
   }
 
-  @Start()
-  onStart(@Ctx() ctx: Context) {
-    ctx.replyWithHTML('<b>Привет, создадим событие?</b>');
-    return;
-  }
-
-  @On('message')
-  onMessage(@Message() msg: any, @Ctx() ctx: Context) {
-    console.log(msg.from);
+  async addUser(
+    telegram_id: number,
+    username: string,
+    first_name: string,
+  ): Promise<UserT> {
+    this.logger.debug('addUser');
+    return this.prisma.user.create({
+      data: {
+        telegram_id: telegram_id,
+        username: username,
+        first_name: first_name,
+      },
+    });
   }
 }

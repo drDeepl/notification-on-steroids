@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-
 import { TelegramModule } from './telegram/telegram.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
@@ -9,7 +8,6 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TelegramModule,
-    PrismaModule,
   ],
 })
 export class AppModule {}

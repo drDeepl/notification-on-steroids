@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TelegramService } from './telegram.service';
+import { TelegramUpdate } from './telegram.update';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { options } from './telegram.config.factory';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { TelegramService } from './telegram.service';
+import { AddEventWizard } from './wizards/add-event.wizard';
 
 @Module({
   imports: [TelegrafModule.forRootAsync(options())],
-  providers: [TelegramService],
+  providers: [TelegramUpdate, TelegramService, AddEventWizard],
 })
 export class TelegramModule {}
