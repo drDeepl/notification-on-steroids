@@ -11,9 +11,11 @@ import {
   Hears,
   Scene,
   TELEGRAF_STAGE,
+  InlineQuery,
+  Context,
 } from 'nestjs-telegraf';
-import { SceneContext } from 'telegraf/typings/scenes';
-import { Scenes, Telegraf } from 'telegraf';
+
+import { Telegraf } from 'telegraf';
 import { UserT } from './types/user.type';
 import { actionButtons } from './buttons/start-inline.button';
 import { TelegramService } from './telegram.service';
@@ -26,7 +28,6 @@ export class TelegramUpdate {
   private readonly logger = new Logger(TelegramUpdate.name);
   constructor(
     @InjectBot() private readonly bot: Telegraf<ContextT>,
-
     private telegramService: TelegramService,
   ) {} // NOTE:
 
@@ -56,8 +57,8 @@ export class TelegramUpdate {
   @On('callback_query')
   async createEvent(@Ctx() ctx: ContextT) {
     this.logger.debug('createEvent');
-    // console.log(ctx.scene);
     ctx.scene.enter('addEvent');
+    this.telegramService.deleteMsgCallbackQuery(ctx);
   }
   @On('message')
   onMessage(@Message() msg: any, @Ctx() ctx: ContextT) {
