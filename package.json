@@ -33,6 +33,7 @@
     "rxjs": "^7.8.1",
     "telegraf": "^4.13.1",
     "telegram-inline-calendar": "^1.6.4",
+    "ts-date": "^3.1.0",
     "tsg-calendar-lib": "^1.7.0"
   },
   "devDependencies": {

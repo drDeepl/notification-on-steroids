@@ -72,9 +72,9 @@ export function inlineCalendar(): Markup.Markup<InlineKeyboardMarkup> {
       } else {
         inlineCalendarKb[week + 2][dayWeek] = Markup.button.callback(
           `${day}`,
-          `${day / 10 < 1 ? '0' + day : day}-${
+          `${currentYear}-${
             currentMonth / 10 < 1 ? '0' + currentMonth : currentMonth
-          }-${currentYear}`,
+          }-${day / 10 < 1 ? '0' + day : day}`,
         );
       }
     }

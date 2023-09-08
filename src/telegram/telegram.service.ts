@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserT } from './types/user.type';
-import { ContextT } from './types/context.type';
+import { ContextT, SceneInlineContext } from './types/context.type';
+import { EventCreated } from './types/event-created.type';
+import { ValidDate } from 'ts-date';
+import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
+
 @Injectable()
 export class TelegramService {
   constructor(private prisma: PrismaService) {}
@@ -34,9 +38,25 @@ export class TelegramService {
     ctx.deleteMessage(msgId);
   }
 
-  async addEvent(title: string, deadline: string) {
+  async addEvent(title: string, deadline: ValidDate): Promise<EventCreated> {
     this.logger.debug('addEvent');
     console.log(`title: ${title}\n deadline: ${deadline}`);
     this.logger.error('TODO');
+    return this.prisma.event.create({
+      data: {
+        title: title,
+        deadline_datetime: deadline,
+      },
+    });
+  }
+
+  async loading(ctx: SceneInlineContext, msg: MessageT.TextMessage) {
+    const numbersSmile: String[] = ['5️⃣,4️⃣,3️⃣,2️⃣,1️⃣'];
+    for (let i = 0; i < numbersSmile.length; i++) {
+      setTimeout(() => {
+        console.log(numbersSmile[i]);
+        ctx.editMessageText(`${msg.text} ${numbersSmile[i]}`, msg);
+      }, 1000);
+    }
   }
 }

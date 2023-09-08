@@ -15,7 +15,8 @@ import { actionButtons } from '../buttons/start-inline.button';
 import { inlineCalendar } from '../buttons/calendar-inline';
 import { TelegramService } from '../telegram.service';
 import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
-
+import { EventCreated } from '../types/event-created.type';
+import { ValidDate, parseIso, format } from 'ts-date/locale/ru';
 @Wizard('addEvent')
 export class AddEventWizard {
   private readonly logger = new Logger(AddEventWizard.name);
@@ -30,7 +31,12 @@ export class AddEventWizard {
   @Action('set_calendar')
   setCalendar(@Ctx() ctx: SceneInlineContext) {
     const msgIdPrev: number = ctx.update.callback_query.message.message_id;
-    ctx.deleteMessage(msgIdPrev);
+    try {
+      ctx.deleteMessage(msgIdPrev);
+    } catch (e) {
+      console.log(e);
+      console.log(Object.keys(e));
+    }
     ctx.wizard.back();
     ctx.reply('Вернул календарь!', inlineCalendar());
   }
@@ -44,12 +50,17 @@ export class AddEventWizard {
     ctx.scene.leave();
   }
 
-  @Action(/\d{1,2}-\d{1,2}-\d{4}/)
+  @Action(/\d{4}-\d{1,2}-\d{1,2}/)
   @WizardStep(2)
   async step2(@Context() ctx: SceneInlineContext, @Message() msg: MessageT) {
     this.logger.debug('step2');
     const msgIdPrev: number = ctx.update.callback_query.message.message_id;
-    ctx.deleteMessage(msgIdPrev);
+    try {
+      ctx.deleteMessage(msgIdPrev);
+    } catch (e) {
+      console.log(e);
+      console.log(Object.keys(e));
+    }
     const dateEvent: string = ctx.update.callback_query['data'];
     ctx.reply('Супер, теперь отправь название для события', {
       reply_markup: {
@@ -68,12 +79,26 @@ export class AddEventWizard {
 
   @On('text')
   @WizardStep(3)
-  setTitleEvent(
+  async setTitleEvent(
     @Context() ctx: SceneInlineContext,
     @Message() msg: MessageT.TextMessage,
   ) {
-    const deadline: string = ctx.wizard.state['date_event'];
-    ctx.reply(`Добавил событие "${msg.text}" на ${deadline}`);
-    this.telegramService.addEvent(msg.text, deadline);
+    const deadline: ValidDate = parseIso(ctx.wizard.state['date_event']);
+    const msgId: number = msg.message_id;
+    ctx.deleteMessage(msgId);
+
+    const eventCreated: EventCreated = await this.telegramService.addEvent(
+      msg.text,
+      deadline,
+    );
+
+    ctx.reply(
+      `Добавил событие "${eventCreated.title}" на ${format(
+        eventCreated.deadline_datetime,
+        'DD.MM.YYYY',
+      )}`,
+    );
+    this.telegramService.loading(ctx, msg);
+    ctx.scene.leave();
   }
 }
