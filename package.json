@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^5.2.0",
     "@types/node-calendar": "^0.1.29",
+    "apaginator": "^1.1.3",
     "nestjs-telegraf": "^2.7.0",
     "node-calendar": "^0.1.5",
     "reflect-metadata": "^0.1.13",

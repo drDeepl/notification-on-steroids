@@ -19,8 +19,12 @@ import { Telegraf } from 'telegraf';
 import { UserT } from './types/user.type';
 import { actionButtons } from './buttons/start-inline.button';
 import { TelegramService } from './telegram.service';
-import { ContextT } from './types/context.type';
+import { ContextT, SceneInlineContext } from './types/context.type';
 import MessageUtil from './utils/message.utils';
+import { EventT } from './types/event.type';
+import { SchemaInlineKeyboard } from './types/schema-inline-keyboard';
+import { createPaginateKb } from './buttons/utils';
+import { Paginator } from 'apaginator';
 
 @Update()
 export class TelegramUpdate {
@@ -54,11 +58,30 @@ export class TelegramUpdate {
   }
 
   // @SceneEnter('callback_query')
-  @On('callback_query')
+  @Action('create_event')
   async createEvent(@Ctx() ctx: ContextT) {
     this.logger.debug('createEvent');
     ctx.scene.enter('addEvent');
     this.telegramService.deleteMsgCallbackQuery(ctx);
+  }
+
+  @Action('my_event')
+  async myEventAction(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('myEventAction');
+    const userIdTelegram: number = ctx.update.callback_query.from.id;
+    const events: EventT[] = await this.telegramService.getEvents(
+      userIdTelegram,
+    );
+    const schemas: SchemaInlineKeyboard[] = [];
+    events.forEach((event) => {
+      schemas.push({ text: event.title, data: `${event.id}` });
+    });
+    const paginator = new Paginator(schemas, 5);
+    console.log(paginator.data);
+    ctx.reply(
+      'Твои события',
+      createPaginateKb(schemas, paginator.totalPages, paginator.currentPage),
+    );
   }
   @On('message')
   onMessage(@Message() msg: any, @Ctx() ctx: ContextT) {

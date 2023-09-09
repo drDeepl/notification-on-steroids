@@ -18,11 +18,14 @@ model User{
   first_name String @db.VarChar(128)
   notifications Notification []
   members_event MembersEvent[]
+  events Event[]
 }
 
 model Event{
   id Int @id @default(autoincrement())
   title String @db.VarChar(128)
+  user_id_telegram Int @db.Integer()
+  users User @relation(fields: [user_id_telegram], references: [telegram_id])
   created_at DateTime @default(now())
   deadline_datetime DateTime @db.Timestamp()
   members_event MembersEvent[]

@@ -5,10 +5,17 @@ import { ContextT, SceneInlineContext } from './types/context.type';
 import { EventCreated } from './types/event-created.type';
 import { ValidDate } from 'ts-date';
 import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
+import { Telegraf } from 'telegraf';
+import { InjectBot } from 'nestjs-telegraf';
+import { EventT } from './types/event.type';
 
 @Injectable()
 export class TelegramService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectBot() private readonly bot: Telegraf<ContextT>,
+    private prisma: PrismaService,
+  ) {}
+
   private readonly logger = new Logger(TelegramService.name);
   async getUser(userId: number): Promise<UserT[]> {
     this.logger.debug('getUser');
@@ -38,7 +45,11 @@ export class TelegramService {
     ctx.deleteMessage(msgId);
   }
 
-  async addEvent(title: string, deadline: ValidDate): Promise<EventCreated> {
+  async addEvent(
+    title: string,
+    deadline: ValidDate,
+    userIdtelegram: number,
+  ): Promise<EventCreated> {
     this.logger.debug('addEvent');
     console.log(`title: ${title}\n deadline: ${deadline}`);
     this.logger.error('TODO');
@@ -46,17 +57,17 @@ export class TelegramService {
       data: {
         title: title,
         deadline_datetime: deadline,
+        user_id_telegram: userIdtelegram,
       },
     });
   }
 
-  async loading(ctx: SceneInlineContext, msg: MessageT.TextMessage) {
-    const numbersSmile: String[] = ['5️⃣,4️⃣,3️⃣,2️⃣,1️⃣'];
-    for (let i = 0; i < numbersSmile.length; i++) {
-      setTimeout(() => {
-        console.log(numbersSmile[i]);
-        ctx.editMessageText(`${msg.text} ${numbersSmile[i]}`, msg);
-      }, 1000);
-    }
+  async getEvents(userIdTelegram: number): Promise<EventT[]> {
+    this.logger.debug('getEvents');
+    return this.prisma.event.findMany({
+      where: {
+        user_id_telegram: userIdTelegram,
+      },
+    });
   }
 }
