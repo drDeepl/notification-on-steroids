@@ -14,6 +14,7 @@ datasource db {
 model User{
   id Int @id @default(autoincrement())
   telegram_id Int @db.Integer() @unique
+  chat_id Int @db.Integer() @unique
   username String @db.VarChar(128)
   first_name String @db.VarChar(128)
   notifications Notification []
@@ -35,8 +36,8 @@ model MembersEvent{
   id Int @id @default(autoincrement())
   event_id Int @db.Integer()
   events Event @relation(fields:[event_id], references: [id])
-  member_id Int @db.Integer()
-  members User @relation(fields: [member_id], references: [id])
+  member_telegram_id Int @db.Integer()
+  members User @relation(fields: [member_telegram_id], references: [telegram_id])
 }
 
 model Notification{

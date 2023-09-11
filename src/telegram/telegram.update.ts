@@ -22,6 +22,7 @@ import { TelegramService } from './telegram.service';
 import { ContextT, SceneInlineContext } from './types/context.type';
 import MessageUtil from './utils/message.utils';
 import { EventT } from './types/event.type';
+import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
 import { SchemaInlineKeyboard } from './types/schema-inline-keyboard';
 import { createPaginateKb } from './buttons/utils';
 import { Paginator } from 'apaginator';
@@ -36,7 +37,7 @@ export class TelegramUpdate {
   ) {} // NOTE:
 
   @Start()
-  async onStart(@Ctx() ctx: ContextT, @Message() msg: any) {
+  async onStart(@Ctx() ctx: ContextT, @Message() msg: MessageT.TextMessage) {
     this.logger.debug('onStart');
     ctx.replyWithHTML(
       `<b>${MessageUtil.welcomeUser(msg.from.username)}</b>`,
@@ -50,6 +51,7 @@ export class TelegramUpdate {
       console.log('length current user less 1');
       this.telegramService.addUser(
         msg.from.id,
+        msg.chat.id,
         msg.from.username,
         msg.from.first_name,
       );
@@ -86,5 +88,20 @@ export class TelegramUpdate {
   @On('message')
   onMessage(@Message() msg: any, @Ctx() ctx: ContextT) {
     console.log(ctx);
+  }
+  @Action('close_msg')
+  async closeMessage(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('closeMessage');
+    const chatId: number = ctx.update.callback_query.message.chat.id;
+    const msgId: number = ctx.update.callback_query.message.message_id;
+    this.bot.telegram.deleteMessage(chatId, msgId);
+  }
+  @Action(/to_send_msg_[0-9]+/)
+  async toSendMemberEvent(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('toSendMemberEvent');
+    const splitedData: string[] = ctx.update.callback_query['data'].split('_');
+    const senderId: string = splitedData[splitedData.length - 1];
+    ctx.scene.enter('dialogEvent');
+    ctx.scene.state['send_to'] = senderId;
   }
 }

@@ -8,16 +8,23 @@ import {
   Context,
   InjectBot,
 } from 'nestjs-telegraf';
-import { Scenes, Telegraf } from 'telegraf';
+import { Markup, Scenes, Telegraf } from 'telegraf';
 import { ContextT, SceneInlineContext } from '../types/context.type';
 import { Logger } from '@nestjs/common';
 import MessageUtil from '../utils/message.utils';
 import { actionButtons } from '../buttons/start-inline.button';
 import { inlineCalendar } from '../buttons/calendar-inline';
+import { addedEventBtns } from '../buttons/added-event';
 import { TelegramService } from '../telegram.service';
-import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
+import {
+  InlineKeyboardMarkup,
+  InlineQueryResult,
+  Message as MessageT,
+} from 'telegraf/typings/core/types/typegram';
 import { EventCreated } from '../types/event-created.type';
 import { ValidDate, parseIso, format } from 'ts-date/locale/ru';
+import { UserT } from '../types/user.type';
+import { MemberEventT } from '../types/memeber-event.type';
 @Wizard('addEvent')
 export class AddEventWizard {
   private readonly logger = new Logger(AddEventWizard.name);
@@ -119,5 +126,55 @@ export class AddEventWizard {
       },
     });
     // ctx.scene.leave();
+    ctx.wizard.state['createdEvent'] = eventCreated;
+    ctx.wizard.next();
+  }
+
+  @Action('add_member_event')
+  @WizardStep(4)
+  async addMemberEvent(@Context() ctx: SceneInlineContext) {
+    this.logger.debug('addMemberEvent');
+    ctx.replyWithHTML(
+      'Отправь мне <b>имя пользователя</b>, которого хочешь добавить к событию и у него появится событие\nОно начинается с <b>@</b>',
+    );
+  }
+
+  @On('text')
+  @WizardStep(4)
+  async setMemberToEvent(
+    @Context() ctx: SceneInlineContext,
+    @Message() msg: MessageT.TextMessage,
+  ) {
+    this.logger.debug('setMemberToEvent');
+    const username: string = msg.text.trim();
+    const user: UserT[] = await this.telegramService.getUserByUsername(
+      username,
+    );
+
+    if (user.length > 0) {
+      const createdEvent: EventCreated = ctx.wizard.state['createdEvent'];
+      console.log(createdEvent);
+      const memberEvent: MemberEventT = await this.telegramService.setEventUser(
+        createdEvent.id,
+        user[0].telegram_id,
+      );
+      const actionCreatedEventBtns: Markup.Markup<InlineKeyboardMarkup> =
+        addedEventBtns(ctx.from.id);
+      console.log(memberEvent);
+      ctx.replyWithHTML(
+        `Добавил <b>${username}</b> к событию`,
+        actionCreatedEventBtns,
+      );
+
+      this.bot.telegram.sendMessage(
+        user[0].chat_id,
+        `${ctx.from.username} добавил(а) тебя к событию "${createdEvent.title}"`,
+        addedEventBtns(user[0].chat_id),
+      );
+    } else {
+      ctx.replyWithHTML(
+        `Я не нашел пользователя с именем <b>"${username}"</b>`,
+      );
+    }
   }
 }
