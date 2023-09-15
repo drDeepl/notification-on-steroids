@@ -6,7 +6,7 @@ import {
 
 import { Calendar } from 'node-calendar';
 
-const MONTHS = {
+export const MONTHS = {
   0: 'январь',
   1: 'февраль',
   2: 'март',
@@ -20,7 +20,7 @@ const MONTHS = {
   10: 'ноябрь',
   11: 'декабрь',
 };
-const DAYS = {
+export const DAYS = {
   0: 'Пн.',
   1: 'Вт.',
   2: 'Ср.',

@@ -9,6 +9,7 @@ import { Telegraf } from 'telegraf';
 import { InjectBot } from 'nestjs-telegraf';
 import { EventT } from './types/event.type';
 import { MemberEventT } from './types/memeber-event.type';
+import { MembersEvent } from '@prisma/client';
 
 @Injectable()
 export class TelegramService {
@@ -90,6 +91,22 @@ export class TelegramService {
       },
     });
   }
+
+  async getEvent(eventId: number): Promise<EventT> {
+    this.logger.debug('getEvent');
+    this.logger.verbose(eventId);
+    return this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+  }
+
+  async getEventByTitle(title: string): Promise<EventT[]> {
+    this.logger.debug('getEventByTitle');
+    return this.prisma.event.findMany({ where: { title: title } });
+  }
+
   async setEventUser(eventId: number, memberId: number): Promise<MemberEventT> {
     this.logger.debug('setEventUser');
     return this.prisma.membersEvent.create({
@@ -97,6 +114,26 @@ export class TelegramService {
         event_id: eventId,
         member_telegram_id: memberId,
       },
+    });
+  }
+
+  async getEventMembers(titleEvent: string): Promise<MemberEventT[]> {
+    const event: EventT[] = await this.getEventByTitle(titleEvent);
+    if (event.length > 0) {
+      return this.prisma.membersEvent.findMany({
+        where: {
+          event_id: event[0].id,
+        },
+      });
+    } else {
+      return [];
+    }
+  }
+
+  async getEventMembersByEventId(eventId: number): Promise<MemberEventT[]> {
+    this.logger.debug('getEventMembersByEventId');
+    return this.prisma.membersEvent.findMany({
+      where: { event_id: eventId },
     });
   }
 }

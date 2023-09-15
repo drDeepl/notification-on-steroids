@@ -25,6 +25,7 @@ import { EventCreated } from '../types/event-created.type';
 import { ValidDate, parseIso, format } from 'ts-date/locale/ru';
 import { UserT } from '../types/user.type';
 import { MemberEventT } from '../types/memeber-event.type';
+import { actionEventBtns } from '../buttons/event-action-buttons';
 @Wizard('addEvent')
 export class AddEventWizard {
   private readonly logger = new Logger(AddEventWizard.name);
@@ -35,6 +36,7 @@ export class AddEventWizard {
 
   @WizardStep(1)
   addEvent(@Ctx() ctx: Scenes.WizardContext) {
+    this.logger.debug('addEvemt');
     ctx.reply('Давай выберем дату', inlineCalendar());
     ctx.wizard.next();
   }
@@ -101,6 +103,7 @@ export class AddEventWizard {
     @Message() msg: MessageT.TextMessage,
   ) {
     const deadline: ValidDate = parseIso(ctx.wizard.state['date_event']);
+    console.log(deadline);
     const msgId: number = msg.message_id;
     const msgIdPrev: number = ctx.wizard.state['msg_id_prev_step'];
     for (let shift = 0; shift < msgId - msgIdPrev + 1; shift++) {
@@ -118,12 +121,7 @@ export class AddEventWizard {
       eventCreated.title
     }" на ${format(eventCreated.deadline_datetime, 'DD.MM.YYYY')}`;
     await ctx.reply(msg_answer, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'В меню', callback_data: 'menu' }],
-          [{ text: 'Добавить человека', callback_data: 'add_member_event' }],
-        ],
-      },
+      reply_markup: actionEventBtns(eventCreated.title).reply_markup,
     });
     // ctx.scene.leave();
     ctx.wizard.state['createdEvent'] = eventCreated;
@@ -171,6 +169,7 @@ export class AddEventWizard {
         `${ctx.from.username} добавил(а) тебя к событию "${createdEvent.title}"`,
         addedEventBtns(user[0].chat_id),
       );
+      ctx.scene.leave();
     } else {
       ctx.replyWithHTML(
         `Я не нашел пользователя с именем <b>"${username}"</b>`,

@@ -6,6 +6,7 @@ export function actionButtons(): Markup.Markup<InlineKeyboardMarkup> {
   return Markup.inlineKeyboard(
     [
       Markup.button.callback('📋 Мои события', 'my_event'),
+      // Markup.button.switchToCurrentChat('📋 Мои события', 'события'),
       Markup.button.callback('📝 Добавить событие', 'create_event'),
     ],
 

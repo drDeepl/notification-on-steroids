@@ -28,19 +28,9 @@ export class DialogEventWizard {
   @WizardStep(1)
   async addEvent(@Ctx() ctx: WizardContextCallback) {
     this.logger.debug('wizard step 1');
-    const callbackDataSerlz: string[] =
-      ctx.update.callback_query['data'].split('_');
-
-    // const senderId = callbackDataSerlz[callbackDataSerlz.length - 1];
-    // ctx.wizard.state['senderId'] = senderId;
-    // const sender: UserT = await this.telegramService.getUserByTelegramId(
-    //   +senderId,
-    // );
-    // ctx.replyWithHTML(
-    //   `создал диалог с "<b>${sender.first_name}</b>"\nНапиши ему..`,
-    // );
-    // console.log(sender);
-    // ctx.wizard.state['senderFirstName'] = sender.first_name;
+    const splitedData: string[] = ctx.update.callback_query['data'].split('_');
+    const toSendChatId: number = +splitedData[splitedData.length - 1];
+    ctx.wizard.state['toSendChatId'] = toSendChatId;
     ctx.wizard.next();
   }
 
@@ -51,7 +41,8 @@ export class DialogEventWizard {
     @Message() msg: MessageT.TextMessage,
   ) {
     this.logger.debug('sendMsgSender');
-    const senderId: string = ctx.wizard.state['senderId'];
+    console.log(ctx.wizard.state['toSendChatId']);
+    const senderId: string = ctx.wizard.state['toSendChatId'];
     const textMsg: string = msg.text;
     const senderFirstName: string = ctx.wizard.state['senderFirstName'];
     console.log(ctx.wizard.state);
