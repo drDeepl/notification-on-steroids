@@ -31,6 +31,10 @@ export class DialogEventWizard {
     const splitedData: string[] = ctx.update.callback_query['data'].split('_');
     const toSendChatId: number = +splitedData[splitedData.length - 1];
     ctx.wizard.state['toSendChatId'] = toSendChatId;
+    const sender: UserT = await this.telegramService.getUserByTelegramId(
+      toSendChatId,
+    );
+    ctx.replyWithHTML(`Начал диалог с ${sender.first_name}!\n напиши что-то..`);
     ctx.wizard.next();
   }
 
@@ -44,7 +48,7 @@ export class DialogEventWizard {
     console.log(ctx.wizard.state['toSendChatId']);
     const senderId: string = ctx.wizard.state['toSendChatId'];
     const textMsg: string = msg.text;
-    const senderFirstName: string = ctx.wizard.state['senderFirstName'];
+    const senderFirstName: string = msg.from.first_name;
     console.log(ctx.wizard.state);
     this.bot.telegram.sendMessage(
       senderId,

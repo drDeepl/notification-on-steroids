@@ -10,22 +10,18 @@ export function createPaginateKb(
   schemas: SchemaInlineKeyboard[],
   countItemOnPage: number,
   currentPage: number,
+  totalCountPages: number,
 ): Markup.Markup<InlineKeyboardMarkup> {
-  const paginator = new Paginator(schemas, countItemOnPage);
   const btns: Array<Array<InlineKeyboardButton>> = [[]];
-  const itemsCurrentPage = paginator.current();
-  console.log(itemsCurrentPage);
-  for (let row = 0; row < itemsCurrentPage.length; row++) {
-    const schema: SchemaInlineKeyboard = itemsCurrentPage[row];
+
+  for (let row = 0; row < countItemOnPage; row++) {
+    const schema: SchemaInlineKeyboard = schemas[row];
     btns.push([Markup.button.callback(schema.text, `${schema.data}`)]);
   }
   const pages: Array<InlineKeyboardButton> = [
     Markup.button.callback(`<<`, 'page_prev'),
-    Markup.button.callback(
-      `${currentPage}/${paginator.totalPages}`,
-      'curr_page',
-    ),
-    Markup.button.callback(`>>`, 'page_prev'),
+    Markup.button.callback(`${currentPage}/${totalCountPages}`, 'curr_page'),
+    Markup.button.callback(`>>`, 'page_next'),
   ];
 
   btns.push(pages);

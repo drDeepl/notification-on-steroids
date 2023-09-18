@@ -157,7 +157,7 @@ export class AddEventWizard {
         user[0].telegram_id,
       );
       const actionCreatedEventBtns: Markup.Markup<InlineKeyboardMarkup> =
-        addedEventBtns(ctx.from.id);
+        addedEventBtns(user[0].telegram_id);
       console.log(memberEvent);
       ctx.replyWithHTML(
         `Добавил <b>${username}</b> к событию`,

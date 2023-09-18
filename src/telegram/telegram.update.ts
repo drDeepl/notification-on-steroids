@@ -92,8 +92,57 @@ export class TelegramUpdate {
     events.forEach((event) => {
       schemas.push({ text: event.title, data: `event_${event.id}` });
     });
+    const paginator: Paginator<SchemaInlineKeyboard> = new Paginator(
+      schemas,
+      5,
+    );
+    ctx.scene.state['paginator'] = paginator;
 
-    ctx.reply('Твои события', createPaginateKb(schemas, 5, 1));
+    ctx.reply(
+      'Твои события',
+      createPaginateKb(
+        paginator.current(),
+        paginator.perPage,
+        paginator.currentPage + 1,
+        paginator.totalPages - 1,
+      ),
+    );
+  }
+
+  @Action('page_next')
+  async inlneMenuPageNext(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('InlineMenuPageNext');
+    const paginator: Paginator<SchemaInlineKeyboard> =
+      ctx.scene.state['paginator'];
+    paginator.next();
+    if (paginator.hasNext()) {
+      ctx.editMessageReplyMarkup(
+        createPaginateKb(
+          paginator.current(),
+          paginator.perPage,
+          paginator.currentPage + 1,
+          paginator.totalPages - 1,
+        ).reply_markup,
+      );
+    }
+  }
+
+  @Action('page_prev')
+  async inlneMenuPagePrev(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('InlineMenuPagePrev');
+    const paginator: Paginator<SchemaInlineKeyboard> =
+      ctx.scene.state['paginator'];
+    paginator.previous();
+    if (paginator.hasPrevious()) {
+      ctx.editMessageReplyMarkup(
+        createPaginateKb(
+          paginator.current(),
+          paginator.perPage,
+          paginator.currentPage - 1,
+          paginator.totalPages - 1,
+        ).reply_markup,
+      );
+    }
   }
 
   @Action(/^event_\d/)
@@ -170,7 +219,7 @@ export class TelegramUpdate {
 
     ctx.reply(
       'Нажми на имя, чтобы отправить сообщение участнику',
-      createPaginateKb(schemas, 5, 1),
+      // createPaginateKb(schemas, 5, 1),
     );
   }
 
