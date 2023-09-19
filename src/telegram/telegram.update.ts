@@ -102,9 +102,8 @@ export class TelegramUpdate {
       'Твои события',
       createPaginateKb(
         paginator.current(),
-        paginator.perPage,
-        paginator.currentPage + 1,
-        paginator.totalPages - 1,
+        paginator.currentPage,
+        paginator.totalPages,
       ),
     );
   }
@@ -114,34 +113,46 @@ export class TelegramUpdate {
     this.logger.debug('InlineMenuPageNext');
     const paginator: Paginator<SchemaInlineKeyboard> =
       ctx.scene.state['paginator'];
-    paginator.next();
-    if (paginator.hasNext()) {
+    if (typeof paginator != 'undefined') {
+      console.log(paginator);
+      if (paginator.hasNext()) {
+        paginator.next();
+      }
+      console.log(paginator.current());
       ctx.editMessageReplyMarkup(
         createPaginateKb(
           paginator.current(),
-          paginator.perPage,
-          paginator.currentPage + 1,
-          paginator.totalPages - 1,
+          paginator.currentPage,
+          paginator.totalPages,
         ).reply_markup,
       );
+    } else {
+      ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+      this.myEventAction(ctx);
     }
   }
 
   @Action('page_prev')
   async inlneMenuPagePrev(@Ctx() ctx: SceneInlineContext) {
     this.logger.debug('InlineMenuPagePrev');
+    const msgId: number = ctx.update.callback_query.message.message_id;
+    const chatId: number = ctx.update.callback_query.from.id;
     const paginator: Paginator<SchemaInlineKeyboard> =
       ctx.scene.state['paginator'];
-    paginator.previous();
-    if (paginator.hasPrevious()) {
+    if (typeof paginator != 'undefined') {
+      if (paginator.hasPrevious()) {
+        paginator.previous();
+      }
       ctx.editMessageReplyMarkup(
         createPaginateKb(
           paginator.current(),
-          paginator.perPage,
-          paginator.currentPage - 1,
-          paginator.totalPages - 1,
+          paginator.currentPage,
+          paginator.totalPages,
         ).reply_markup,
       );
+    } else {
+      this.bot.telegram.deleteMessage(chatId, msgId);
+      this.myEventAction(ctx);
     }
   }
 
@@ -216,10 +227,15 @@ export class TelegramUpdate {
         data: `to_send_msg_${user.chat_id}`,
       });
     }
-
+    const paginator: Paginator<SchemaInlineKeyboard> = new Paginator(schemas);
+    ctx.scene.state['paginator'] = paginator;
     ctx.reply(
       'Нажми на имя, чтобы отправить сообщение участнику',
-      // createPaginateKb(schemas, 5, 1),
+      createPaginateKb(
+        paginator.current(),
+        paginator.currentPage,
+        paginator.totalPages,
+      ),
     );
   }
 

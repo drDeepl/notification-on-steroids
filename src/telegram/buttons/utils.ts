@@ -4,24 +4,29 @@ import {
   InlineKeyboardMarkup,
 } from 'telegraf/typings/core/types/typegram';
 import { SchemaInlineKeyboard } from '../types/schema-inline-keyboard';
-import { Paginator } from 'apaginator';
 
 export function createPaginateKb(
   schemas: SchemaInlineKeyboard[],
-  countItemOnPage: number,
+
   currentPage: number,
   totalCountPages: number,
 ): Markup.Markup<InlineKeyboardMarkup> {
   const btns: Array<Array<InlineKeyboardButton>> = [[]];
 
-  for (let row = 0; row < countItemOnPage; row++) {
+  for (let row = 0; row < schemas.length; row++) {
     const schema: SchemaInlineKeyboard = schemas[row];
     btns.push([Markup.button.callback(schema.text, `${schema.data}`)]);
   }
   const pages: Array<InlineKeyboardButton> = [
-    Markup.button.callback(`<<`, 'page_prev'),
-    Markup.button.callback(`${currentPage}/${totalCountPages}`, 'curr_page'),
-    Markup.button.callback(`>>`, 'page_next'),
+    Markup.button.callback(`<<`, `${currentPage > 0 ? 'page_prev' : '_'}`),
+    Markup.button.callback(
+      `${currentPage + 1}/${totalCountPages}`,
+      'curr_page',
+    ),
+    Markup.button.callback(
+      `>>`,
+      `${currentPage + 1 < totalCountPages ? 'page_next' : '_'}`,
+    ),
   ];
 
   btns.push(pages);
