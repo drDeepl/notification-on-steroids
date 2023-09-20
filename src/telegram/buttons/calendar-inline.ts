@@ -5,6 +5,7 @@ import {
 } from 'telegraf/typings/core/types/typegram';
 
 import { Calendar } from 'node-calendar';
+import DateTime from 'xdatetime';
 
 export const MONTHS = {
   0: 'январь',
@@ -59,7 +60,6 @@ export function inlineCalendar(): Markup.Markup<InlineKeyboardMarkup> {
     currentMonth + 1,
   );
 
-  console.log(calendar);
   for (let week = 0; week < calendar.length; week++) {
     for (let dayWeek = 0; dayWeek < calendar[week].length; dayWeek++) {
       const day: number = calendar[week][dayWeek];
@@ -73,7 +73,7 @@ export function inlineCalendar(): Markup.Markup<InlineKeyboardMarkup> {
         inlineCalendarKb[week + 2][dayWeek] = Markup.button.callback(
           `${day}`,
           `${currentYear}-${
-            currentMonth / 10 < 1 ? '0' + currentMonth : currentMonth
+            currentMonth / 10 < 1 ? '0' + (currentMonth + 1) : currentMonth + 1
           }-${day / 10 < 1 ? '0' + day : day}`,
         );
       }

@@ -7,8 +7,9 @@ export function actionEventBtns(
 ): Markup.Markup<InlineKeyboardMarkup> {
   return Markup.inlineKeyboard(
     [
-      Markup.button.switchToCurrentChat('участники', `участники:${eventTitle}`),
+      // Markup.button.switchToCurrentChat('участники', `участники:${eventTitle}`),
       Markup.button.callback('📝 добавить участника', 'add_member_event'),
+      Markup.button.callback('меню', 'menu'),
       Markup.button.callback('закрыть', 'close_event'),
     ],
 

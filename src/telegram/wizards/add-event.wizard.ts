@@ -26,6 +26,9 @@ import { ValidDate, parseIso, format } from 'ts-date/locale/ru';
 import { UserT } from '../types/user.type';
 import { MemberEventT } from '../types/memeber-event.type';
 import { actionEventBtns } from '../buttons/event-action-buttons';
+import DateTime from 'xdatetime';
+import { NotificationT } from '../types/notification.type';
+
 @Wizard('addEvent')
 export class AddEventWizard {
   private readonly logger = new Logger(AddEventWizard.name);
@@ -62,6 +65,16 @@ export class AddEventWizard {
       this.logger.error(Object.keys(e));
     });
     ctx.reply(MessageUtil.menuMsg(), actionButtons());
+    ctx.scene.leave();
+  }
+
+  @Action('close_msg')
+  closeMsg(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('closeMsg');
+    const msgId: number = ctx.update.callback_query.message.message_id;
+    ctx.deleteMessage(msgId).catch((e) => {
+      this.logger.error(Object.keys(e));
+    });
     ctx.scene.leave();
   }
 
@@ -102,7 +115,12 @@ export class AddEventWizard {
     @Context() ctx: SceneInlineContext,
     @Message() msg: MessageT.TextMessage,
   ) {
-    const deadline: ValidDate = parseIso(ctx.wizard.state['date_event']);
+    // const deadline: ValidDate = parseIso(ctx.wizard.state['date_event']);
+    this.logger.debug('setTitleEvent');
+    this.logger.warn(`date event: ${ctx.wizard.state['date_event']}`);
+    const deadline = new DateTime(ctx.wizard.state['date_event']);
+    const monthDeadline: number = deadline.getMonths() + 1;
+    deadline.addMonths(monthDeadline);
     console.log(deadline);
     const msgId: number = msg.message_id;
     const msgIdPrev: number = ctx.wizard.state['msg_id_prev_step'];
@@ -111,21 +129,51 @@ export class AddEventWizard {
         this.logger.error(Object.keys(e));
       });
     }
-
     const eventCreated: EventCreated = await this.telegramService.addEvent(
       msg.text,
-      deadline,
+      deadline.toString('yyyy-MM-ddThh:mm:ssZ'),
       msg.from.id,
     );
+    const formatDeadline = new DateTime(eventCreated.deadline_datetime);
+    const dayOfDeadline: number = formatDeadline.getDays();
+    if (dayOfDeadline > 1) {
+      formatDeadline.addDays(dayOfDeadline - 1);
+
+      console.log(formatDeadline);
+    } else {
+      formatDeadline.addMonths(formatDeadline.getMonths() - 1);
+
+      formatDeadline.addDays(formatDeadline.getMonths());
+    }
+    formatDeadline.addHours(19);
+    formatDeadline.addMinutes(0);
+
+    const newNotification: NotificationT =
+      await this.telegramService.setNotification(
+        eventCreated.id,
+        msg.chat.id,
+        formatDeadline.toString('yyyy-MM-ddThh:mm:ssZ'),
+      );
     const msg_answer: string = `Добавил событие "${
       eventCreated.title
-    }" на ${format(eventCreated.deadline_datetime, 'DD.MM.YYYY')}`;
-    await ctx.reply(msg_answer, {
+    }" на ${format(
+      eventCreated.deadline_datetime,
+      'DD.MM.YYYY',
+    )}\n---\nНапомню о нём ${new DateTime(
+      newNotification.recipent_datetime,
+    ).toString('dd.MM.yyyy hh:mm')}`;
+    await ctx.replyWithHTML(msg_answer, {
       reply_markup: actionEventBtns(eventCreated.title).reply_markup,
     });
+
+    // this.telegramService.setNotification(
+    //   eventCreated.id,
+    //   msg.chat.id,
+    //   deadline,
+    // );
     // ctx.scene.leave();
     ctx.wizard.state['createdEvent'] = eventCreated;
-    ctx.wizard.next();
+    ctx.scene.leave();
   }
 
   @Action('add_member_event')

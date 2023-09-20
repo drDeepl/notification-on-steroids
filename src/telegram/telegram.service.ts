@@ -10,6 +10,8 @@ import { InjectBot } from 'nestjs-telegraf';
 import { EventT } from './types/event.type';
 import { MemberEventT } from './types/memeber-event.type';
 import { MembersEvent } from '@prisma/client';
+import { NotificationT } from './types/notification.type';
+import DateTime from 'xdatetime';
 
 @Injectable()
 export class TelegramService {
@@ -68,7 +70,7 @@ export class TelegramService {
 
   async addEvent(
     title: string,
-    deadline: ValidDate,
+    deadline: string,
     userIdtelegram: number,
   ): Promise<EventCreated> {
     this.logger.debug('addEvent');
@@ -113,6 +115,21 @@ export class TelegramService {
       data: {
         event_id: eventId,
         member_telegram_id: memberId,
+      },
+    });
+  }
+
+  async setNotification(
+    eventId: number,
+    chatId: number,
+    deadline: string,
+  ): Promise<NotificationT> {
+    this.logger.debug('setNotification');
+    return this.prisma.notification.create({
+      data: {
+        recipient_telegram_id: chatId,
+        event_id: eventId,
+        recipent_datetime: deadline,
       },
     });
   }

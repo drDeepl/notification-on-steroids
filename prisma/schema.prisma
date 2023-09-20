@@ -30,6 +30,7 @@ model Event{
   created_at DateTime @default(now())
   deadline_datetime DateTime @db.Timestamp()
   members_event MembersEvent[]
+  notifications Notification[]
 }
 
 model MembersEvent{
@@ -43,7 +44,10 @@ model MembersEvent{
 model Notification{
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
-  recipient_id Int @db.Integer()
-  recipients User @relation(fields: [recipient_id], references: [id])
+  recipient_telegram_id Int @db.Integer()
+  event_id Int @db.Integer()
   recipent_datetime DateTime @db.Timestamp()
+  events Event @relation(fields: [event_id], references: [id])
+  recipients User @relation(fields: [recipient_telegram_id], references: [telegram_id])
+  
 }
