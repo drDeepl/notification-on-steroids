@@ -18,28 +18,18 @@ import {
 import { Markup, Telegraf } from 'telegraf';
 import { UserT } from './types/user.type';
 import { actionButtons } from './buttons/start-inline.button';
-import { eventButton } from './buttons/close-msg.button';
+import { eventButton } from './buttons/event-btn';
 import { TelegramService } from './telegram.service';
-import {
-  ContextInlinekQueryI,
-  ContextT,
-  SceneInlineContext,
-} from './types/context.type';
+import { ContextT, SceneInlineContext } from './types/context.type';
 import MessageUtil from './utils/message.utils';
 import { EventT } from './types/event.type';
-import {
-  InlineQueryResult,
-  Message as MessageT,
-} from 'telegraf/typings/core/types/typegram';
+import { Message as MessageT } from 'telegraf/typings/core/types/typegram';
 import { SchemaInlineKeyboard } from './types/schema-inline-keyboard';
 import { createPaginateKb, formatISODate } from './buttons/utils';
 import { Paginator } from 'apaginator';
-import { InlineQueryResultT } from './types/inline-query-result.type';
-import { DAYS, MONTHS } from './buttons/calendar-inline';
-import { format } from 'ts-date';
 import { actionEventBtns } from './buttons/event-action-buttons';
+
 import { MemberEventT } from './types/memeber-event.type';
-import { text } from 'stream/consumers';
 
 @Update()
 export class TelegramUpdate {
@@ -156,12 +146,44 @@ export class TelegramUpdate {
     }
   }
 
+  @Action(/^del_event\$/)
+  async delEvent(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('delEvent');
+    const eventId: string = ctx.update.callback_query['data'].split('$').at(1);
+    console.log(eventId);
+    const currentEvent: EventT = ctx.scene.state['current_event'];
+    // const membersEvent: MemberEventT[] =
+    //   await this.telegramService.getEventMembersByEventId(+eventId);
+    // console.log(membersEvent);
+    // membersEvent.forEach((event) => {
+    //   this.telegramService.deleteMemberEvent(event.id).then((delEv) => {
+    //     this.bot.telegram.sendMessage(
+    //       delEv.member_telegram_id,
+    //       `${ctx.update.callback_query.from.first_name} отменил событие "${currentEvent.title}" `,
+    //     );
+    //   });
+    // });
+    const deletedEvent: EventT = await this.telegramService.deleteEvent(
+      +eventId,
+    );
+    ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    ctx.reply(`событие "${deletedEvent.title}" удалено!`);
+  }
+  @Action('prev_to_events')
+  async prevToEvents(@Ctx() ctx: SceneInlineContext) {
+    this.logger.debug('prevToEvents');
+    const msgId: number = ctx.update.callback_query.message.message_id;
+    ctx.deleteMessage(msgId);
+    this.myEventAction(ctx);
+  }
   @Action(/^event_\d/)
   async eventInfo(@Ctx() ctx: SceneInlineContext) {
     this.logger.debug('eventInfo');
+    ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     const eventId: string = ctx.update.callback_query['data'].split('_')[1];
     console.log(eventId);
     const event: EventT = await this.telegramService.getEvent(+eventId);
+    ctx.scene.state['current_event'] = event;
     const deadline: Date = event.deadline_datetime;
     ctx.replyWithHTML(
       `${event.title}\n---\nЗапланировано на ${formatISODate(deadline)}`,
@@ -217,26 +239,34 @@ export class TelegramUpdate {
     const membersEvent: MemberEventT[] =
       await this.telegramService.getEventMembersByEventId(+eventId);
     const schemas: SchemaInlineKeyboard[] = [];
-    for (let i = 0; i < membersEvent.length; i++) {
-      const member: MemberEventT = membersEvent[i];
-      const user: UserT = await this.telegramService.getUserByTelegramId(
-        member.member_telegram_id,
+    if (membersEvent.length > 0) {
+      for (let i = 0; i < membersEvent.length; i++) {
+        const member: MemberEventT = membersEvent[i];
+        const user: UserT = await this.telegramService.getUserByTelegramId(
+          member.member_telegram_id,
+        );
+        schemas.push({
+          text: user.first_name,
+          data: `to_send_msg_${user.chat_id}`,
+        });
+      }
+      const paginator: Paginator<SchemaInlineKeyboard> = new Paginator(schemas);
+      ctx.scene.state['paginator'] = paginator;
+      console.log(paginator.current());
+      ctx.reply(
+        'Нажми на имя, чтобы отправить сообщение участнику',
+        createPaginateKb(
+          paginator.current(),
+          paginator.currentPage,
+          paginator.totalPages,
+        ),
       );
-      schemas.push({
-        text: user.first_name,
-        data: `to_send_msg_${user.chat_id}`,
-      });
+    } else {
+      ctx.replyWithHTML(
+        'Упс...\nУчастники для события не найдены',
+        actionEventBtns(eventId),
+      );
     }
-    const paginator: Paginator<SchemaInlineKeyboard> = new Paginator(schemas);
-    ctx.scene.state['paginator'] = paginator;
-    ctx.reply(
-      'Нажми на имя, чтобы отправить сообщение участнику',
-      createPaginateKb(
-        paginator.current(),
-        paginator.currentPage,
-        paginator.totalPages,
-      ),
-    );
   }
 
   @Action('add_member_event')

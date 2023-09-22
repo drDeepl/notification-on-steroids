@@ -153,4 +153,29 @@ export class TelegramService {
       where: { event_id: eventId },
     });
   }
+
+  async deleteMemberEvent(memberId: number) {
+    this.logger.debug('deleteMemberEvent');
+    return this.prisma.membersEvent.delete({
+      where: {
+        id: memberId,
+      },
+    });
+  }
+
+  async deleteEvent(eventId: number): Promise<EventT> {
+    this.logger.debug('deleteEvent');
+    console.log(eventId);
+    const event: EventT[] = await this.prisma.event.findMany({
+      where: {
+        id: eventId,
+      },
+    });
+    console.log(event);
+    return this.prisma.event.delete({
+      where: {
+        id: eventId,
+      },
+    });
+  }
 }

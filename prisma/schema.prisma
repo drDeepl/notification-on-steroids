@@ -26,7 +26,7 @@ model Event{
   id Int @id @default(autoincrement())
   title String @db.VarChar(128)
   user_id_telegram Int @db.Integer()
-  users User @relation(fields: [user_id_telegram], references: [telegram_id])
+  users User @relation(fields: [user_id_telegram], references: [telegram_id], onDelete: Cascade)
   created_at DateTime @default(now())
   deadline_datetime DateTime @db.Timestamp()
   members_event MembersEvent[]
@@ -36,7 +36,7 @@ model Event{
 model MembersEvent{
   id Int @id @default(autoincrement())
   event_id Int @db.Integer()
-  events Event @relation(fields:[event_id], references: [id])
+  events Event @relation(fields:[event_id], references: [id], onDelete: Cascade)
   member_telegram_id Int @db.Integer()
   members User @relation(fields: [member_telegram_id], references: [telegram_id])
 }
@@ -48,6 +48,5 @@ model Notification{
   event_id Int @db.Integer()
   recipent_datetime DateTime @db.Timestamp()
   events Event @relation(fields: [event_id], references: [id])
-  recipients User @relation(fields: [recipient_telegram_id], references: [telegram_id])
-  
+  recipients User @relation(fields: [recipient_telegram_id], references: [telegram_id]) 
 }
